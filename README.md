@@ -4,7 +4,7 @@
 
 ## 🚀 如何使用？
 
-1. 打开网页：[https://your-username.github.io/acmg-scorer](https://your-username.github.io/acmg-scorer)
+1. 打开网页：[https://kimmygogo.github.io/acmg-scorer](https://kimmygogo.github.io/acmg-scorer)
 2. 选择左侧「严格模式」或「教学模式」
 3. 填写证据项（PVS1, PM2, PP1...）
 4. 点击「计算」即可看到最终分类
@@ -19,4 +19,4 @@
 ## 📎 联系 & 反馈
 
 欢迎提交 issue 或 PR！  
-GitHub: https://github.com/your-username/acmg-scorer
+GitHub: https://github.com/kimmygogo/acmg-scorer
