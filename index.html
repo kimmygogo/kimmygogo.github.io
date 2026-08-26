@@ -1,93 +1,331 @@
 <!DOCTYPE html>
-<html lang="zxx">
-
+<html lang="zh-CN">
 <head>
-	<title>Home</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<meta name="keywords" content=""
-	/>
-	<script>
-		addEventListener("load", function () {
-			setTimeout(hideURLbar, 0);
-		}, false);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACMG 2015 证据叠加评分工具（双模式）</title>
+<style>
+  :root{
+    --pvs:#c0392b; --ps:#e67e22; --pm:#d4ac0d; --pp:#7d6608;
+    --ba:#1f618d; --bs:#2874a6; --bp:#5499c7;
+    --path:#c0392b; --lpath:#e67e22; --vus:#7d6608; --lben:#2874a6; --ben:#1f618d;
+    --bg:#f4f6f9; --card:#fff; --border:#e1e6ed; --text:#2c3e50; --muted:#7f8c8d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;}
+  header{background:linear-gradient(135deg,#2c3e50,#4a6580);color:#fff;padding:22px 24px;}
+  header h1{margin:0 0 6px;font-size:22px;}
+  header p{margin:0;opacity:.85;font-size:13px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px;}
+  .grid{display:grid;grid-template-columns:1fr 370px;gap:18px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;}.panel{position:static!important;}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .card h2{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .tag{font-size:11px;font-weight:700;color:#fff;padding:2px 8px;border-radius:10px;}
+  .tag.pvs{background:var(--pvs);}.tag.ps{background:var(--ps);}.tag.pm{background:var(--pm);}.tag.pp{background:var(--pp);}
+  .tag.ba{background:var(--ba);}.tag.bs{background:var(--bs);}.tag.bp{background:var(--bp);}
+  .group{margin-bottom:10px;}
+  .group-title{font-weight:700;font-size:13px;margin:8px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .ev{display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;user-select:none;border:1px solid transparent;}
+  .ev:hover{background:#f0f4f8;border-color:var(--border);}
+  .ev input{margin-top:3px;accent-color:var(--ps);}
+  .ev .meta{flex:1;}
+  .ev .code{font-weight:700;font-size:13px;}
+  .ev .desc{font-size:12px;color:#576574;}
+  .ev .pts{font-size:12px;font-weight:700;white-space:nowrap;}
+  .ev.selected{background:#fff6ee;border-color:#f5cfa0;}
+  .ev.selected.pvs{background:#fdecea;border-color:#f5b7b1;}
+  .ev.selected.ben{background:#eaf2f8;border-color:#aed6f1;}
+  .panel{position:sticky;top:16px;}
+  .score-num{font-size:46px;font-weight:800;line-height:1;text-align:center;margin:6px 0;}
+  .score-num.pos{color:var(--path);}.score-num.neg{color:var(--ben);}.score-num.zero{color:var(--muted);}
+  .bar{height:12px;background:#e8edf2;border-radius:8px;overflow:hidden;position:relative;margin:8px 0;}
+  .bar>i{position:absolute;top:0;bottom:0;display:block;}
+  .bar .fill-pos{background:linear-gradient(90deg,var(--lpath),var(--path));right:50%;transform-origin:right;}
+  .bar .fill-neg{background:linear-gradient(90deg,var(--lben),var(--ben));left:50%;transform-origin:left;}
+  .classify{text-align:center;font-size:20px;font-weight:800;padding:12px;border-radius:10px;margin:10px 0;color:#fff;}
+  .classify.P{background:var(--path);}.classify.LP{background:var(--lpath);}
+  .classify.VUS{background:var(--vus);}.classify.LB{background:var(--lben);}.classify.B{background:var(--ben);}
+  .basis{font-size:12px;color:#555;background:#f7f9fb;border:1px dashed var(--border);border-radius:8px;padding:8px 10px;min-height:48px;}
+  ul.sel{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto;font-size:12px;}
+  ul.sel li{padding:5px 8px;border-bottom:1px solid #eef1f4;display:flex;justify-content:space-between;gap:8px;}
+  ul.sel li:last-child{border-bottom:none;}
+  ul.sel .s-code{font-weight:700;}
+  .s-empty{color:var(--muted);text-align:center;padding:14px;}
+  .legend{font-size:12px;color:#555;line-height:1.7;}
+  .legend b{color:var(--text);}
+  .btn{cursor:pointer;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;background:#4a6580;color:#fff;}
+  .btn:hover{background:#3b5268;}
+  .btn.ghost{background:#e8edf2;color:var(--text);}
+  .foot{font-size:11px;color:var(--muted);margin-top:8px;}
+  details{background:#fbfcfd;border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:8px;}
+  details summary{cursor:pointer;font-weight:700;font-size:13px;}
+  details .body{font-size:12px;color:#555;margin-top:6px;}
+  table.rules{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+  table.rules th,table.rules td{border:1px solid var(--border);padding:5px 7px;text-align:left;}
+  table.rules th{background:#eef2f5;}
+  /* mode switch */
+  .modebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+  .switch{position:relative;display:inline-flex;align-items:center;background:#e8edf2;border-radius:999px;padding:3px;gap:0;}
+  .switch button{flex:1;min-width:120px;border:none;background:transparent;font-size:13px;font-weight:700;color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;transition:.15s;}
+  .switch button.active.cli{background:#2c3e50;color:#fff;}
+  .switch button.active.edu{background:#d4ac0d;color:#fff;}
+  .mode-note{border-left:4px solid var(--ps);background:#fff8ec;padding:8px 12px;border-radius:8px;font-size:12px;color:#6b4a0a;margin-bottom:10px;}
+  .mode-note.edu{border-left-color:var(--pm);background:#fffbe6;}
+  .badge{font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:8px;background:var(--lpath);}
+  .badge.edu{background:var(--pm);}
+</style>
+</head>
+<body>
+<header>
+  <h1>ACMG 2015 证据叠加评分工具（双模式）</h1>
+  <p>依据 ACMG/AMP 2015 指南（Richards et al.）实现，8/4/2/1 计分。可在"严格 ACMG 模式（临床用）"与"教学简化模式（≥10 致病 / 6–9 可能致病）"间切换。</p>
+</header>
+<div class="wrap">
+<div class="grid">
+  <div>
+    <div class="card">
+      <div class="modebar">
+        <span style="font-weight:700">分类模式：</span>
+        <div class="switch" id="modeSwitch">
+          <button data-mode="strict" class="cli active">严格 ACMG 模式（临床）</button>
+          <button data-mode="edu" class="edu">教学简化模式</button>
+        </div>
+        <span class="badge" id="modeBadge">默认：临床</span>
+      </div>
+      <div class="mode-note" id="modeNote">
+        <b>严格 ACMG 模式：</b>分类按 ACMG 2015 Table 5 证据组合规则（非纯数学累加），分数仅辅助显示。用于临床报告辅助判读。
+      </div>
+    </div>
+    <div class="card">
+      <h2>致病证据（Pathogenic）<span class="tag pvs">PVS +8</span><span class="tag ps">PS +4</span><span class="tag pm">PM +2</span><span class="tag pp">PP +1</span></h2>
+      <div id="pathGroups"></div>
+    </div>
+    <div class="card">
+      <h2>良性证据（Benign）<span class="tag ba">BA −8</span><span class="tag bs">BS −4</span><span class="tag bp">BP −1</span></h2>
+      <div id="benGroups"></div>
+    </div>
+    <div class="card">
+      <h2>使用说明 / 计分规则</h2>
+      <div class="legend">
+        <b>计分：</b>PVS1=+8（极强致病），PS=+4，PM=+2，PP=+1；BA1=−8，BS=−4，BP=−1。<br>
+        <b>严格 ACMG 核心限制：</b>① 仅 PP 不能升级为 Likely Pathogenic；② 仅 PM+PP（无 PVS/PS）不能判 Pathogenic；③ 致病侧明确分级须至少含 1 条 PVS 或 PS。<br>
+        <b>教学简化模式：</b>按净分值阈值判——<b>≥10 致病 / 6–9 可能致病 / −5~5 VUS / −9~−6 可能良性 / ≤−10 良性</b>（仅用于教学演示，不用于临床报告）。
+      </div>
+      <details>
+        <summary>查看两模式分类规则表</summary>
+        <div class="body">
+          <table class="rules">
+            <tr><th>模式</th><th>分类</th><th>判定条件</th></tr>
+            <tr><td rowspan="5">严格 ACMG</td><td><b>Pathogenic</b></td><td>含 PVS/PS 且达强组合（PVS1+PS/PM 组合、PS+PS+PM、PS+PM 等 ACMG Table 5 组合）</td></tr>
+            <tr><td><b>Likely Pathogenic</b></td><td>PVS1+PP；PS+PM；PS+PP+PP；或含 PVS/PS 的中强累加组合</td></tr>
+            <tr><td><b>VUS</b></td><td>未满足明确组合；或致病/良性并存无法归类</td></tr>
+            <tr><td><b>Likely Benign</b></td><td>BS+BP；或良性侧占优</td></tr>
+            <tr><td><b>Benign</b></td><td>BA1 单独；或 ≤−12 且含 BS</td></tr>
+            <tr><td rowspan="5">教学简化</td><td><b>Pathogenic</b></td><td>净分 ≥10</td></tr>
+            <tr><td><b>Likely Pathogenic</b></td><td>净分 6–9</td></tr>
+            <tr><td><b>VUS</b></td><td>净分 −5–5</td></tr>
+            <tr><td><b>Likely Benign</b></td><td>净分 −9~−6</td></tr>
+            <tr><td><b>Benign</b></td><td>净分 ≤−10</td></tr>
+          </table>
+        </div>
+      </details>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="card">
+      <h2>实时评分与分类</h2>
+      <div class="score-num zero" id="scoreNum">0</div>
+      <div class="bar"><i class="fill-pos" id="barPos" style="width:0%"></i><i class="fill-neg" id="barNeg" style="width:0%"></i></div>
+      <div class="classify VUS" id="classify">VUS</div>
+      <div class="basis" id="basis">尚未选择证据。请勾选左侧证据开始评分。</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn ghost" id="btnReset" style="flex:1;">重置</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>已选证据</h2>
+      <ul class="sel" id="selList"><li class="s-empty">暂无</li></ul>
+      <div class="foot">小计：致病侧 <b id="subP">0</b> / 良性侧 <b id="subB">0</b></div>
+    </div>
+    <div class="card foot" id="modeFoot">
+      本工具为<b>教育与临床辅助用途</b>，不能替代临床遗传学家结合家系、表型、人群数据及功能实验的最终综合解读。PVS1 权重按 ACMG 2015 原始规则取 +8。
+    </div>
+  </div>
+</div>
+</div>
 
-		function hideURLbar() {
-			window.scrollTo(0, 1);
-		}
-	</script>
-	<!-- font files -->
-	<link href="http://fonts.googleapis.com/css?family=Work+Sans:100,200,300,400,500,600,700,800,900" rel="stylesheet">
-	<!-- /font files -->
-	<!-- css files -->
-	<link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-	<link href="css/font-awesome.css" rel="stylesheet" type="text/css" media="all" />
-	<!-- /css files -->
-	<body>
-		<div class="banner-layer">
-			<div class="logo text-center">
-				<h1>
-					<a href="index.html">
-						<span class="fa fa-hand-peace-o" aria-hidden="true"></span>Come on!</a>
-				</h1>
-			</div>
-			<div class="w3ls-container   text-center">
+<script>
+const EVIDENCE = {
+  path: [
+    {code:"PVS1",pts:8,group:"PVS 极强致病",desc:"导致功能丧失：无义、移码、±1/±2 剪接、起始终止缺失等（结合转录本/外显子重要性判定）"},
+    {code:"PS1",pts:4,group:"PS 强致病",desc:"与已知致病变异相同氨基酸改变（不同核苷酸）"},
+    {code:"PS2",pts:4,group:"PS 强致病",desc:"父母源性排除后，患者中新发（de novo）变异"},
+    {code:"PS3",pts:4,group:"PS 强致病",desc:"功能实验明确证实功能丧失/获得等有害效应"},
+    {code:"PS4",pts:4,group:"PS 强致病",desc:"病例-对照等统计显著关联（排除常见良性变异）"},
+    {code:"PM1",pts:2,group:"PM 中等",desc:"位于突变热点/关键功能域，且人群频率极低"},
+    {code:"PM2",pts:2,group:"PM 中等",desc:"人群数据库（gnomAD/千人等）中频率极低（一般 ≤5e-5）"},
+    {code:"PM3",pts:2,group:"PM 中等",desc:"反义变异（in trans）见于患者，提示复合杂合"},
+    {code:"PM4",pts:2,group:"PM 中等",desc:"非移码缺失/插入导致关键功能域改变"},
+    {code:"PM5",pts:2,group:"PM 中等",desc:"改变同一核苷酸，导致已确定为致病氨基酸变化"},
+    {code:"PM6",pts:2,group:"PM 中等",desc:"推测为新发变异（无父母样本证实）"},
+    {code:"PP1",pts:1,group:"PP 支持",desc:"在家系中共分离（多个患者携带该变异）"},
+    {code:"PP2",pts:1,group:"PP 支持",desc:"错义突变比例高的基因中，该变异为该基因错义变异"},
+    {code:"PP3",pts:1,group:"PP 支持",desc:"计算/预测证据支持有害（保守性、剪接、蛋白影响等多工具一致）"},
+    {code:"PP4",pts:1,group:"PP 支持",desc:"患者表型高度特异且与基因疾病表型一致"},
+    {code:"PP5",pts:1,group:"PP 支持",desc:"可信文献/数据库报告为致病且证据充分"}
+  ],
+  ben: [
+    {code:"BA1",pts:-8,group:"BA 极强良性",desc:"人群频率 ≥5%（gnomAD/ExAC），明确良性"},
+    {code:"BS1",pts:-4,group:"BS 强良性",desc:"人群频率高于疾病发病率预期"},
+    {code:"BS2",pts:-4,group:"BS 强良性",desc:"在健康成年纯合/半合子中发现（该基因疾病完全外显前提下）"},
+    {code:"BS3",pts:-4,group:"BS 强良性",desc:"功能实验明确证实无有害效应"},
+    {code:"BS4",pts:-4,group:"BS 强良性",desc:"在家系中缺乏共分离（携带变异者未患病）"},
+    {code:"BP1",pts:-1,group:"BP 支持良性",desc:"位于错义突变比例低/无义为主基因中的错义变异"},
+    {code:"BP2",pts:-1,group:"BP 支持良性",desc:"在显性疾病的健康个体中为疑似/确定的反义变异"},
+    {code:"BP3",pts:-1,group:"BP 支持良性",desc:"剪接预测提示不影响关键剪接位点/保守序列"},
+    {code:"BP4",pts:-1,group:"BP 支持良性",desc:"计算/预测证据支持良性（多工具一致）"},
+    {code:"BP5",pts:-1,group:"BP 支持良性",desc:"存在另一已知致病变异可解释患者表型"},
+    {code:"BP6",pts:-1,group:"BP 支持良性",desc:"可信文献/数据库报告为良性且证据充分"},
+    {code:"BP7",pts:-1,group:"BP 支持良性",desc:"同义变异且剪接预测不支持新剪接位点"}
+  ]
+};
 
-				<div class="w3l-content">
-					<div class="left-grid">
-						<h2 class="text-w3layouts">统计</h2>
-                        <a target="_blank" href="">医学统计学笔记</a>
-						<span class="text-w3layouts">医学统计</span>
-					</div>
-					<div class="right-grid">
-						<p>
-						<a target="_blank" href="">相关专业知识1</a>
-						<a target="_blank" href="">相关专业知识2</a>
-						</p>
-						<p>
-						<a target="_blank" href="">相关专业知识3</a>
-						<a target="_blank" href="">相关专业知识4</a>
-						</p>
-						<!--<div class="sub-form">
-							<form action="#" method="post">
-								<input type="email" name="email" size="30" required="" placeholder="Email">
-								<button class="btn1">
-									<span class="fa fa-paper-plane" aria-hidden="true"></span>
-								</button>
-							</form>
-						</div>-->
-					</div>
-				</div>
-				<div class="agile-social-icons">
-					<p>Get inspired and Follow our Team! To stay up to date</p>
-					<ul class="social_list">
-						<li>
-							<a href="#">
-								<img src="images/a.png" alt="" />
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								<img src="images/c.png" alt="" />
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								<img src="images/d.png" alt="" />
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								<img src="images/e.png" alt="" />
-							</a>
-						</li>
-					</ul>
-				</div>
+const ALL = [...EVIDENCE.path, ...EVIDENCE.ben];
+const selected = new Set();
+let MODE = "strict";
 
-			</div>
-			<div class="footer">
-				<p>Copyright &copy; 2024-2030.Zhiqin Zhang All rights reserved.<a target="_blank" href="">Contact Me：teardrop789@126.com</a></p>
-			</div>
-		</div>
-	</body>
+const $ = id => document.getElementById(id);
+
+function groupBy(arr,key){return arr.reduce((m,x)=>((m[x[key]]=m[x[key]]||[]).push(x),m),{});}
+function gtag(g){
+  if(g.startsWith("PVS")) return "pvs"; if(g.startsWith("PS")) return "ps";
+  if(g.startsWith("PM")) return "pm"; if(g.startsWith("PP")) return "pp";
+  if(g.startsWith("BA")) return "ba"; if(g.startsWith("BS")) return "bs"; return "bp";
+}
+function grpHTML(g,list){
+  return `<div class="group"><div class="group-title">${g}</div>`+
+    list.map(e=>`<label class="ev" data-code="${e.code}">
+      <input type="checkbox" data-code="${e.code}" data-pts="${e.pts}">
+      <div class="meta"><span class="code">${e.code}</span> <span class="desc">${e.desc}</span></div>
+      <div class="pts">${e.pts>0?'+':''}${e.pts}</div>
+    </label>`).join("")+`</div>`;
+}
+
+function renderGroups(){
+  const pg = groupBy(EVIDENCE.path,"group"), bg = groupBy(EVIDENCE.ben,"group");
+  $("pathGroups").innerHTML = Object.entries(pg).map(([g,l])=>grpHTML(g,l)).join("");
+  $("benGroups").innerHTML = Object.entries(bg).map(([g,l])=>grpHTML(g,l)).join("");
+  document.querySelectorAll('.ev').forEach(ev=>ev.querySelector('input').addEventListener('change',onCheck));
+}
+
+function onCheck(ev){
+  const c = ev.target.dataset.code;
+  if(ev.target.checked) selected.add(c); else selected.delete(c);
+  document.querySelectorAll(`.ev[data-code="${c}"]`).forEach(l=>l.classList.toggle("selected",ev.target.checked));
+  update();
+}
+
+function classifyStrict(score, hasPVS, hasPS, hasBA, hasBS, strongPath){
+  let cls="VUS", basis="";
+  if(hasBA){ cls="B"; basis="存在 BA1（人群频率≥5%），判为良性。"; return {cls,basis}; }
+  if(score<=-12 && hasBS){ cls="B"; basis="总分≤−12 且含 BS 证据，判为良性。"; return {cls,basis}; }
+  if(score<=-8 && hasBS){ cls="LB"; basis="总分≤−8 且含 BS 证据，判为可能良性。"; return {cls,basis}; }
+  if(score<=-6 && hasBS){ cls="LB"; basis="含 BS 且良性侧占优，判为可能良性。"; return {cls,basis}; }
+  // pathogenic side (need PVS/PS)
+  if(score>=12 && strongPath){ cls="P"; basis="总分≥12 且含 PVS/PS 证据，满足 Pathogenic 门槛。"; }
+  else if(score>=10 && hasPVS){ cls="P"; basis="PVS1+较强累加（≥10）且含 PVS，判 Pathogenic。"; }
+  else if(score>=8 && hasPVS){ cls="LP"; basis="PVS1+支持性证据（≥8），判 Likely Pathogenic。"; }
+  else if(score>=8 && hasPS){ cls="LP"; basis="PS+累加至≥8 且含 PS，判 Likely Pathogenic。"; }
+  else if(hasPS && ALL.find(e=>selected.has(e.code)&&e.code.startsWith("PM"))){ cls="LP"; basis="PS+PM 组合，判 Likely Pathogenic。"; }
+  else if(hasPVS){ cls="LP"; basis="含 PVS1，权重极高，判 Likely Pathogenic。"; }
+  else if(score>=6){ cls="VUS"; basis="总分 6–9 但缺乏 PVS/PS，按严格规则不能仅据 PM/PP 升级，判 VUS（教学模式才会判 LP）。"; }
+  else if(score>=5 && hasPS){ cls="LP"; basis="含 PS 且总分≥5，判 Likely Pathogenic。"; }
+  else if(score<=-6){ cls="LB"; basis="良性证据为主且致病侧无 PVS/PS，倾向可能良性（需谨慎）。"; }
+  else{ cls="VUS"; basis="未满足明确致病或良性判定阈值，判为意义未明（VUS）。"; }
+  return {cls,basis};
+}
+
+function classifyEdu(score){
+  if(score>=10) return {cls:"P", basis:`[教学简化] 净分 ${score}≥10，按教学阈值判 Pathogenic。`};
+  if(score>=6)  return {cls:"LP",basis:`[教学简化] 净分 ${score} 在 6–9，按教学阈值判 Likely Pathogenic。`};
+  if(score<=-10)return {cls:"B", basis:`[教学简化] 净分 ${score}≤−10，按教学阈值判 Benign。`};
+  if(score<=-6) return {cls:"LB",basis:`[教学简化] 净分 ${score} 在 −9~−6，按教学阈值判 Likely Benign。`};
+  return {cls:"VUS",basis:`[教学简化] 净分 ${score} 在 −5–5，按教学阈值判 VUS。`};
+}
+
+function update(){
+  let score=0, subP=0, subB=0;
+  const pick=[];
+  selected.forEach(c=>{
+    const e=ALL.find(x=>x.code===c); if(!e) return;
+    score+=e.pts; pick.push(e);
+    if(e.pts>0) subP+=e.pts; else subB+=e.pts;
+  });
+  const hasPVS=selected.has("PVS1");
+  const hasPS=[...selected].some(c=>c.startsWith("PS"));
+  const hasBA=selected.has("BA1");
+  const hasBS=[...selected].some(c=>c.startsWith("BS"));
+  const strongPath=hasPVS||hasPS;
+
+  let res;
+  if(MODE==="strict") res=classifyStrict(score,hasPVS,hasPS,hasBA,hasBS,strongPath);
+  else res=classifyEdu(score);
+
+  // conflict override (both modes, safety)
+  if(strongPath && hasBA){
+    res={cls:"VUS",basis:"同时存在 PVS/PS 与 BA1，证据冲突，须由临床遗传专家结合家系/人群数据裁决 → VUS。"};
+  } else if(MODE==="strict" && strongPath && hasBS && (res.cls==="LB"||res.cls==="B")){
+    res.basis+=" 注意：致病与良性证据并存，建议临床遗传专家裁决。";
+  }
+  if(MODE==="edu" && strongPath && hasBS){
+    res={cls:"VUS",basis:"致病与良性证据并存，教学模式按冲突保守处理 → VUS（请切严格模式并结合专家裁决）。"};
+  }
+
+  // render score
+  const sn=$("scoreNum");
+  sn.textContent=(score>0?"+":"")+score;
+  sn.className="score-num "+(score>0?"pos":score<0?"neg":"zero");
+  const pos=score>=0?score:0, neg=score<0?-score:0;
+  $("barPos").style.width=Math.min(50,pos/16*50)+"%";
+  $("barNeg").style.width=Math.min(50,neg/16*50)+"%";
+  const cl=$("classify");
+  cl.textContent={P:"Pathogenic 致病",LP:"Likely Pathogenic 可能致病",VUS:"VUS 意义未明",LB:"Likely Benign 可能良性",B:"Benign 良性"}[res.cls];
+  cl.className="classify "+res.cls;
+  $("basis").innerHTML="<b>判定依据：</b>"+res.basis;
+  // selected list
+  const ul=$("selList");
+  if(pick.length===0){ul.innerHTML='<li class="s-empty">暂无</li>';}
+  else{ul.innerHTML=pick.sort((a,b)=>b.pts-a.pts).map(e=>`<li><span class="s-code">${e.code}</span><span>${e.pts>0?"+":""}${e.pts}</span></li>`).join("");}
+  $("subP").textContent="+"+subP; $("subB").textContent=subB;
+}
+
+// mode switch
+document.querySelectorAll('#modeSwitch button').forEach(b=>b.addEventListener('click',()=>{
+  MODE=b.dataset.mode;
+  document.querySelectorAll('#modeSwitch button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const badge=$("modeBadge"), note=$("modeNote"), foot=$("modeFoot");
+  if(MODE==="strict"){
+    badge.textContent="当前：临床（严格 ACMG）"; badge.style.background="var(--lpath)";
+    note.className="mode-note"; note.innerHTML="<b>严格 ACMG 模式：</b>分类按 ACMG 2015 Table 5 证据组合规则（非纯数学累加），分数仅辅助显示。用于临床报告辅助判读。";
+    foot.innerHTML="本工具为<b>教育与临床辅助用途</b>，不能替代临床遗传学家结合家系、表型、人群数据及功能实验的最终综合解读。PVS1 权重按 ACMG 2015 原始规则取 +8。";
+  } else{
+    badge.textContent="当前：教学（简化阈值）"; badge.style.background="var(--pm)";
+    note.className="mode-note edu"; note.innerHTML="<b>教学简化模式：</b>仅按净分值阈值分类（≥10 致病 / 6–9 可能致病 / −5~5 VUS / −9~−6 可能良性 / ≤−10 良性）。<b>仅供教学演示，不得用于临床报告。</b>";
+    foot.innerHTML="<b>教学简化模式已启用：</b>本结果按分数阈值得出，不等同于 ACMG 正式分类，仅用于教学/培训演示，不用于临床报告。";
+  }
+  update();
+}));
+
+$("btnReset").addEventListener('click',()=>{
+  selected.clear();
+  document.querySelectorAll('input[type=checkbox]').forEach(i=>i.checked=false);
+  document.querySelectorAll('.ev.selected').forEach(l=>l.classList.remove('selected'));
+  update();
+});
+
+renderGroups(); update();
+</script>
+</body>
 </html>
